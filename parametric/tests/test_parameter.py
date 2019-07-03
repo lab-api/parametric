@@ -1,11 +1,8 @@
 from parametric import Parameter
 import pytest
 
-x = Parameter('x')
-x(2)
-
-y = Parameter('y')
-y(3)
+x = Parameter('x', 2)
+y = Parameter('y', 3)
 
 def test_neg():
     z = -x
