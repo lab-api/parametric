@@ -1,13 +1,15 @@
 import numpy as np
 
 class Parameter:
-    def __init__(self, name, value, get_cmd = None, set_cmd = None, composite=False, bounds=[None, None]):
+    def __init__(self, name, value, get_cmd = None, set_cmd = None, composite=False, bounds=None):
         self.name = name
         self.getter = get_cmd
         self.setter = set_cmd
         self.composite = composite
-        self.bounds = bounds
-
+        if bounds is None:
+            self.bounds = [None, None]
+        else:
+            self.bounds = bounds
         if composite:
             self.value = value
         else:
