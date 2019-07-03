@@ -1,9 +1,9 @@
 import numpy as np
 
 class Parameter:
-    def __init__(self, name, get_cmd = None, set_cmd = None, composite=False, bounds=(None, None)):
+    def __init__(self, name, value=None, get_cmd = None, set_cmd = None, composite=False, bounds=(None, None)):
         self.name = name
-        self.value = None
+        self.value = value
         self.getter = get_cmd
         self.setter = set_cmd
         self.composite = composite
