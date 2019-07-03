@@ -1,12 +1,13 @@
 import numpy as np
 
 class Parameter:
-    def __init__(self, name, value, get_cmd = None, set_cmd = None, composite=False, bounds=(None, None)):
+    def __init__(self, name, value, get_cmd = None, set_cmd = None, composite=False, bounds=[None, None]):
         self.name = name
         self.getter = get_cmd
         self.setter = set_cmd
         self.composite = composite
         self.bounds = bounds
+
         if composite:
             self.value = value
         else:
@@ -43,18 +44,31 @@ class Parameter:
 
     def __neg__(self):
         ''' Returns this parameter with its value multiplied by -1. '''
+        bounds = [None, None]
+        if self.bounds[0] is not None:
+            bounds[1] = -self.bounds[0]
+        if self.bounds[1] is not None:
+            bounds[0] = -self.bounds[1]
+
         return Parameter(f'-{self.name}',
                          value = -self.value,
                          get_cmd = lambda: -1*self(),
-                         set_cmd = lambda x: self(-x))
+                         set_cmd = lambda x: self(-x),
+                         bounds = bounds)
 
     def __mul__(self, n):
         ''' Returns a new parameter multiplied by a factor n. '''
+        bounds = [None, None]
+        for i in range(2):
+            if self.bounds[i] is not None:
+                bounds[i] = n*self.bounds[i]
+
         if type(n) in [int, float]:
             return Parameter(f'{n}*{self.name}',
                              value = self.value*n,
                              get_cmd = lambda: n*self(),
-                             set_cmd=lambda x: self(x/n))
+                             set_cmd = lambda x: self(x/n),
+                             bounds = bounds)
         elif isinstance(n, Parameter):
             return Parameter(f'{self.name}*{n.name}',
                              value = self.value*n.value,
@@ -67,18 +81,29 @@ class Parameter:
 
     def __pow__(self, n):
         ''' Returns a new parameter raised to a power n. '''
+        bounds = [None, None]
+        for i in range(2):
+            if self.bounds[i] is not None:
+                bounds[i] = self.bounds[i]**n
         return Parameter(f'{self.name}^{n}',
                          value = self.value**n,
                          get_cmd = lambda: self()**n,
-                         set_cmd=lambda x: self(np.exp(np.log(x)/n)))
+                         set_cmd = lambda x: self(np.exp(np.log(x)/n)),
+                         bounds = bounds)
 
     def __add__(self, a):
         ''' Returns a new parameter offset by a constant a '''
+        bounds = [None, None]
+        for i in range(2):
+            if self.bounds[i] is not None:
+                bounds[i] = a + self.bounds[i]
+
         if type(a) in [int, float]:
             return Parameter(f'{self.name}+{a}',
                               value = self.value+a,
                               get_cmd = lambda: self()+a,
-                              set_cmd=lambda x: self(x-a))
+                              set_cmd = lambda x: self(x-a),
+                              bounds = bounds)
         elif isinstance(a, Parameter):
             return Parameter(f'{self.name}+{a.name}',
                               value=self.value+a.value,
@@ -91,11 +116,16 @@ class Parameter:
 
     def __sub__(self, a):
         ''' Returns a new parameter offset by a constant -a '''
+        bounds = [None, None]
+        for i in range(2):
+            if self.bounds[i] is not None:
+                bounds[i] = self.bounds[i]-a
         if type(a) in [int, float]:
             return Parameter(f'{self.name}-{a}',
                              value = self.value-a,
                              get_cmd = lambda: self()-a,
-                             set_cmd=lambda x: self(x+a))
+                             set_cmd = lambda x: self(x+a),
+                             bounds = bounds)
         elif isinstance(a, Parameter):
             return Parameter(f'{self.name}-{a.name}',
                              value = self.value - a.value,
@@ -109,11 +139,17 @@ class Parameter:
 
     def __truediv__(self, a):
         ''' Returns a new parameter divided by a '''
+        bounds = [None, None]
+        for i in range(2):
+            if self.bounds[i] is not None:
+                bounds[i] = self.bounds[i] / a
+
         if type(a) in [int, float]:
             return Parameter(f'{self.name}/{a}',
                               value = self.value / a,
                               get_cmd = lambda: self()/a,
-                              set_cmd=lambda x: self(x*a))
+                              set_cmd=lambda x: self(x*a),
+                              bounds = bounds)
         elif isinstance(a, Parameter):
             return Parameter(f'{self.name}/{a.name}',
                               value = self.value / a.value,
@@ -124,11 +160,18 @@ class Parameter:
 
     def __rtruediv__(self, a):
         ''' Returns a divided by this parameter '''
+        bounds = [None, None]
+        if self.bounds[0] is not None:
+            bounds[1] = a /self.bounds[0]
+        if self.bounds[1] is not None:
+            bounds[0] = a / self.bounds[1]
+
         if type(a) in [int, float]:
             return Parameter(f'{a}/{self.name}',
                              value = a / self.value,
                              get_cmd = lambda: a/self(),
-                             set_cmd=lambda x: self(a/x))
+                             set_cmd=lambda x: self(a/x),
+                             bounds = bounds)
         elif isinstance(a, Parameter):
             return Parameter(f'{a.name}/{self.name}',
                              value = a.value / self.value,

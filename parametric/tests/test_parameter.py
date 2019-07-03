@@ -1,16 +1,20 @@
 from parametric import Parameter
 import pytest
 
-x = Parameter('x', 2)
+x = Parameter('x', 2, bounds=(2,4))
 y = Parameter('y', 3)
 
 def test_neg():
     z = -x
     assert z() == -2
+    assert z.bounds[0] == -x.bounds[1]
+    assert z.bounds[1] == -x.bounds[0]
 
 def test_add():
     z = x + 2
     assert z() == 4
+    for i in range(2):
+        assert z.bounds[i] == x.bounds[i] + 2
 
     w = x + y
     assert w() == 5
@@ -18,6 +22,8 @@ def test_add():
 def test_sub():
     z = x - 2
     assert z() == 0
+    for i in range(2):
+        assert z.bounds[i] == x.bounds[i] - 2
 
     w = x - y
     assert w() == -1
