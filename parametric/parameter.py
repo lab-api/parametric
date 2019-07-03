@@ -1,12 +1,13 @@
 import numpy as np
 
 class Parameter:
-    def __init__(self, name, get_cmd = None, set_cmd = None, composite=False):
+    def __init__(self, name, get_cmd = None, set_cmd = None, composite=False, bounds=(None, None)):
         self.name = name
         self.value = None
         self.getter = get_cmd
         self.setter = set_cmd
         self.composite = composite
+        self.bounds = bounds
 
     def __call__(self, *args):
         ''' If called with no arguments, calls and returns the getter function.
@@ -25,6 +26,14 @@ class Parameter:
         else:
             if self.composite:
                 raise Exception('Composite parameters are read-only.')
+            if self.bounds[0] is not None:
+                if args[0] < self.bounds[0]:
+                    raise ValueError('Setpoint outside of defined bounds')
+                    return
+            if self.bounds[1] is not None:
+                if args[0] > self.bounds[1]:
+                    raise ValueError('Setpoint outside of defined bounds')
+                    return
             if self.setter is not None:
                 self.setter(args[0])
             self.value = args[0]

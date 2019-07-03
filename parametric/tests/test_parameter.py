@@ -1,4 +1,5 @@
-from greenhouse import Parameter
+from parametric import Parameter
+import pytest
 
 x = Parameter('x')
 x(2)
@@ -49,3 +50,10 @@ def test_div():
 
     z = y/x
     assert z() == 3/2
+
+def test_bounds():
+    x.bounds = (0, 1)
+    with pytest.raises(ValueError):
+        assert x(-1)
+    with pytest.raises(ValueError):
+        assert x(2)
