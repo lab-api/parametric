@@ -40,7 +40,7 @@ power()
 
 The new parameter's set method is automatically updated, so you can also set the power directly:
 ```python
-power(.08)  # set to 40 mW
+power(.08)  # set to 80 mW
 voltage()
 >> 2
 ```
