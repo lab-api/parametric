@@ -168,3 +168,12 @@ class Parameter:
                              composite=True)
         raise TypeError(""" Parameter added to invalid type. Supported
                             types are int, float, or Parameter. """)
+
+
+def parametrize(self, **kwargs):
+    ''' Converts passed keyword arguments into Parameters. For example,
+        calling parametrize(self, a=1) in a class constructor will attach
+        a Parameter attribute called a with value 1 to the class.
+    '''
+    for name, value in kwargs.items():
+        setattr(self, name, Parameter(name, value))
