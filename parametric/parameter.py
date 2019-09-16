@@ -1,16 +1,14 @@
 import numpy as np
 
 class Parameter:
-    def __init__(self, name, get_cmd = None, set_cmd = None, composite=False, bounds=None):
+    def __init__(self, name, value=None, get_cmd=None, set_cmd=None, composite=False, bounds=(None, None)):
         self.name = name
-        self.getter = get_cmd
-        self.setter = set_cmd
+        self.get_cmd = get_cmd
+        self.set_cmd = set_cmd
         self.composite = composite
-        if bounds is None:
-            self.bounds = [None, None]
-        else:
-            self.bounds = bounds
-        self.value = None
+        self.bounds = bounds
+
+        self(value)
 
     def __call__(self, *args):
         ''' If called with no arguments, calls and returns the getter function.
@@ -23,12 +21,13 @@ class Parameter:
             of __init__, this value is also passed to that method.
         '''
         if len(args) == 0:
-            if self.getter is not None:
-                self.value = self.getter()
+            if self.get_cmd is not None:
+                self.value = self.get_cmd()
             if self.value is None:
                 raise ValueError(f'Value of parameter {self.name} not yet set.')
             return self.value
         else:
+            self.value = args[0]
             if args[0] == None:
                 return
             if self.composite:
@@ -41,9 +40,8 @@ class Parameter:
                 if args[0] > self.bounds[1]:
                     raise ValueError('Setpoint outside of defined bounds')
                     return
-            if self.setter is not None:
-                self.setter(args[0])
-            self.value = args[0]
+            if self.set_cmd is not None:
+                self.set_cmd(args[0])
 
     def __neg__(self):
         ''' Returns this parameter with its value multiplied by -1. '''
