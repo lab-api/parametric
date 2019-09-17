@@ -1,14 +1,33 @@
+''' The Parameter class here is defined as a drop-in replacement for integers
+    or floats in simulations, offering some enhanced functionalities. Suppose we
+    have a parameter x with value 3:
+        x = Parameter('x', 3)
+    Mathematical operations on this parameter will behave exactly as with floats:
+        x + 1: returns 4
+        x * 2: returns 6
+        x > 4: returns False
+        x <= 4: returns True
+
+    However, calling x directly will show that it is a Parameter:
+        x: Parameter('x', 3)
+
+    This allows the object itself to be passed to an optimizer. Additionally,
+    custom functionalities can be added by passing functions to the get_cmd
+    and set_cmd arguments.
+'''
 import numpy as np
 
 class Parameter:
-    def __init__(self, name, value=None, get_cmd=None, set_cmd=None, composite=False, bounds=(None, None)):
+    def __init__(self, name, value=None, get_cmd=None, set_cmd=None, bounds=(None, None)):
         self.name = name
         self.get_cmd = get_cmd
         self.set_cmd = set_cmd
-        self.composite = composite
         self.bounds = bounds
 
         self(value)
+
+    def __repr__(self):
+        return f"Parameter('{self.name}', {self()})"
 
     def __call__(self, *args):
         ''' If called with no arguments, calls and returns the getter function.
@@ -30,8 +49,6 @@ class Parameter:
             self.value = args[0]
             if args[0] == None:
                 return
-            if self.composite:
-                raise Exception('Composite parameters are read-only.')
             if self.bounds[0] is not None:
                 if args[0] < self.bounds[0]:
                     raise ValueError('Setpoint outside of defined bounds')
@@ -43,132 +60,52 @@ class Parameter:
             if self.set_cmd is not None:
                 self.set_cmd(args[0])
 
-    def __neg__(self):
-        ''' Returns this parameter with its value multiplied by -1. '''
-        bounds = [None, None]
-        if self.bounds[0] is not None:
-            bounds[1] = -self.bounds[0]
-        if self.bounds[1] is not None:
-            bounds[0] = -self.bounds[1]
 
-        return Parameter(f'-{self.name}',
-                         get_cmd = lambda: -1*self(),
-                         set_cmd = lambda x: self(-x),
-                         bounds = bounds)
+    def __neg__(self):
+        return -self()
 
     def __mul__(self, n):
-        ''' Returns a new parameter multiplied by a factor n. '''
-        bounds = [None, None]
-        for i in range(2):
-            if self.bounds[i] is not None:
-                bounds[i] = n*self.bounds[i]
-
-        if type(n) in [int, float]:
-            return Parameter(f'{n}*{self.name}',
-                             get_cmd = lambda: n*self(),
-                             set_cmd = lambda x: self(x/n),
-                             bounds = bounds)
-        elif isinstance(n, Parameter):
-            return Parameter(f'{self.name}*{n.name}',
-                             get_cmd = lambda: n()*self(),
-                             composite=True)
-        raise TypeError(""" Parameter added to invalid type. Supported
-                            types are int, float, or Parameter. """)
+        return n*self()
 
     __rmul__ = __mul__
 
     def __pow__(self, n):
-        ''' Returns a new parameter raised to a power n. '''
-        bounds = [None, None]
-        for i in range(2):
-            if self.bounds[i] is not None:
-                bounds[i] = self.bounds[i]**n
-        return Parameter(f'{self.name}^{n}',
-                         get_cmd = lambda: self()**n,
-                         set_cmd = lambda x: self(np.exp(np.log(x)/n)),
-                         bounds = bounds)
+        return self()**n
 
+    def __rpow__(self, n):
+        return n**self()
+        
     def __add__(self, a):
-        ''' Returns a new parameter offset by a constant a '''
-        bounds = [None, None]
-        for i in range(2):
-            if self.bounds[i] is not None:
-                bounds[i] = a + self.bounds[i]
-
-        if type(a) in [int, float]:
-            return Parameter(f'{self.name}+{a}',
-                              get_cmd = lambda: self()+a,
-                              set_cmd = lambda x: self(x-a),
-                              bounds = bounds)
-        elif isinstance(a, Parameter):
-            return Parameter(f'{self.name}+{a.name}',
-                              get_cmd = lambda: self()+a(),
-                              composite=True)
-        raise TypeError(""" Parameter added to invalid type. Supported
-                            types are int, float, or Parameter. """)
+        return self() + a
 
     __radd__ = __add__
 
     def __sub__(self, a):
-        ''' Returns a new parameter offset by a constant -a '''
-        bounds = [None, None]
-        for i in range(2):
-            if self.bounds[i] is not None:
-                bounds[i] = self.bounds[i]-a
-        if type(a) in [int, float]:
-            return Parameter(f'{self.name}-{a}',
-                             get_cmd = lambda: self()-a,
-                             set_cmd = lambda x: self(x+a),
-                             bounds = bounds)
-        elif isinstance(a, Parameter):
-            return Parameter(f'{self.name}-{a.name}',
-                             get_cmd = lambda: self()-a(),
-                             composite=True)
-        raise TypeError(""" Parameter added to invalid type. Supported
-                            types are int, float, or Parameter. """)
+        return self() - a
 
     def __rsub__(self, a):
         return -self.__sub__(a)
 
     def __truediv__(self, a):
-        ''' Returns a new parameter divided by a '''
-        bounds = [None, None]
-        for i in range(2):
-            if self.bounds[i] is not None:
-                bounds[i] = self.bounds[i] / a
-
-        if type(a) in [int, float]:
-            return Parameter(f'{self.name}/{a}',
-                              get_cmd = lambda: self()/a,
-                              set_cmd=lambda x: self(x*a),
-                              bounds = bounds)
-        elif isinstance(a, Parameter):
-            return Parameter(f'{self.name}/{a.name}',
-                              get_cmd = lambda: self()/a(),
-                              composite=True)
-        raise TypeError(""" Parameter added to invalid type. Supported
-                            types are int, float, or Parameter. """)
+        return self() / a
 
     def __rtruediv__(self, a):
-        ''' Returns a divided by this parameter '''
-        bounds = [None, None]
-        if self.bounds[0] is not None:
-            bounds[1] = a /self.bounds[0]
-        if self.bounds[1] is not None:
-            bounds[0] = a / self.bounds[1]
+        return a / self()
 
-        if type(a) in [int, float]:
-            return Parameter(f'{a}/{self.name}',
-                             get_cmd = lambda: a/self(),
-                             set_cmd=lambda x: self(a/x),
-                             bounds = bounds)
-        elif isinstance(a, Parameter):
-            return Parameter(f'{a.name}/{self.name}',
-                             get_cmd = lambda: a()/self(),
-                             composite=True)
-        raise TypeError(""" Parameter added to invalid type. Supported
-                            types are int, float, or Parameter. """)
+    def __lt__(self, a):
+        return self() < a
 
+    def __le__(self, a):
+        return self() <= a
+
+    def __gt__(self, a):
+        return self() > a
+
+    def __ge__(self, a):
+        return self() >= a
+
+    def __eq__(self, a):
+        return self() == a
 
 def parametrize(self, **kwargs):
     ''' Converts passed keyword arguments into Parameters. For example,
