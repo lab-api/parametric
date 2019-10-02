@@ -29,6 +29,30 @@ class Parameter:
     def __repr__(self):
         return f"Parameter('{self.name}', {self()})"
 
+    def _validate_bounds(self, value):
+        ''' Check if the passed value is within the bounds and raise an exception
+            if not.
+        '''
+        if self.bounds[0] is not None:
+            if value < self.bounds[0]:
+                raise ValueError('Setpoint outside of defined bounds')
+        if self.bounds[1] is not None:
+            if value > self.bounds[1]:
+                raise ValueError('Setpoint outside of defined bounds')
+
+    def get(self):
+        if self.get_cmd is not None:
+            self.value = self.get_cmd()
+        if self.value is None:
+            raise ValueError(f'Value of parameter {self.name} not yet set.')
+        return self.value
+
+    def set(self, value):
+        self._validate_bounds(value)
+        self.value = value
+        if self.set_cmd is not None:
+            self.set_cmd(value)
+
     def __call__(self, *args):
         ''' If called with no arguments, calls and returns the getter function.
             This defaults to simply the "value" attr, but the user can implement
@@ -40,26 +64,9 @@ class Parameter:
             of __init__, this value is also passed to that method.
         '''
         if len(args) == 0:
-            if self.get_cmd is not None:
-                self.value = self.get_cmd()
-            if self.value is None:
-                raise ValueError(f'Value of parameter {self.name} not yet set.')
-            return self.value
+            return self.get()
         else:
-            self.value = args[0]
-            if args[0] == None:
-                return
-            if self.bounds[0] is not None:
-                if args[0] < self.bounds[0]:
-                    raise ValueError('Setpoint outside of defined bounds')
-                    return
-            if self.bounds[1] is not None:
-                if args[0] > self.bounds[1]:
-                    raise ValueError('Setpoint outside of defined bounds')
-                    return
-            if self.set_cmd is not None:
-                self.set_cmd(args[0])
-
+            self.set(args[0])
 
     def __neg__(self):
         return -self()
@@ -74,7 +81,7 @@ class Parameter:
 
     def __rpow__(self, n):
         return n**self()
-        
+
     def __add__(self, a):
         return self() + a
 
