@@ -26,13 +26,28 @@ def test_div():
 def test_pow():
     assert x**2 == 2**x == 4
     assert x**y == 8
-    
+
 def test_ineq():
     assert y > x
     assert y >= x
     assert x < y
     assert x <= y
 
+def test_inplace():
+    z = Parameter('z', 1)
+
+    z += 1
+    assert z == 2
+
+    z -= 1
+    assert z == 1
+
+    z *= 2
+    assert z == 2
+
+    z /= 2
+    assert z == 1
+    
 def test_bounds():
     x.bounds = (0, 1)
     with pytest.raises(ValueError):

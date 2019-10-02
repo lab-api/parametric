@@ -105,6 +105,22 @@ class Parameter:
     def __eq__(self, a):
         return self() == a
 
+    def __iadd__(self, a):
+        self(self.value+a)
+        return self
+
+    def __isub__(self, a):
+        self(self.value-a)
+        return self
+
+    def __imult__(self, a):
+        self(self.value*a)
+        return self
+
+    def __idiv__(self, a):
+        self(self.value/a)
+        return self
+
 def parametrize(self, **kwargs):
     ''' Converts passed keyword arguments into Parameters. For example,
         calling parametrize(self, a=1) in a class constructor will attach
