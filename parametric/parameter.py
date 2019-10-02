@@ -18,7 +18,7 @@
 import numpy as np
 
 class Parameter:
-    def __init__(self, name, value=None, get_cmd=None, set_cmd=None, bounds=(None, None)):
+    def __init__(self, name, value=None, get_cmd=None, set_cmd=None, bounds=(-np.inf, np.inf)):
         self.name = name
         self.get_cmd = get_cmd
         self.set_cmd = set_cmd
@@ -29,17 +29,6 @@ class Parameter:
     def __repr__(self):
         return f"Parameter('{self.name}', {self()})"
 
-    def _validate_bounds(self, value):
-        ''' Check if the passed value is within the bounds and raise an exception
-            if not.
-        '''
-        if self.bounds[0] is not None:
-            if value < self.bounds[0]:
-                raise ValueError('Setpoint outside of defined bounds')
-        if self.bounds[1] is not None:
-            if value > self.bounds[1]:
-                raise ValueError('Setpoint outside of defined bounds')
-
     def get(self):
         if self.get_cmd is not None:
             self.value = self.get_cmd()
@@ -48,7 +37,8 @@ class Parameter:
         return self.value
 
     def set(self, value):
-        self._validate_bounds(value)
+        if not self.bounds[0] <= value <= self.bounds[1]:
+            raise ValueError('Setpoint outside of defined bounds')
         self.value = value
         if self.set_cmd is not None:
             self.set_cmd(value)
@@ -66,7 +56,8 @@ class Parameter:
         if len(args) == 0:
             return self.get()
         else:
-            self.set(args[0])
+            if args[0] is not None:
+                self.set(args[0])
 
     def __neg__(self):
         return -self()
