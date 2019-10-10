@@ -2,7 +2,8 @@ import visa
 from parametric import Instrument, Parameter
 
 class VisaParameter:
-    def __init__(self, instrument, get_cmd=None, set_cmd=None, get_parser=None):
+    def __init__(self, name, instrument, value=None, get_cmd=None, set_cmd=None, get_parser=None):
+        self.name = name
         self.instrument = instrument
         self.get_cmd = get_cmd
         self.set_cmd = set_cmd
@@ -20,7 +21,7 @@ class VisaParameter:
 
     def set(self, value):
         if isinstance(self.set_cmd, str):
-            self.instrument.write(self.set_cmd.format(args[0]))
+            self.instrument.write(self.set_cmd.format(value))
         else:
             self.set_cmd(value)
 
@@ -39,6 +40,10 @@ class VisaInstrument(Instrument):
         self.visa_handle = visa_handle
         self.visa_handle.write_termination = write_termination
         self.visa_handle.read_termination = read_termination
+
+    def add_parameter(self, name, get_cmd=None, set_cmd=None, get_parser=None):
+        param = VisaParameter(name, self, get_cmd=get_cmd, set_cmd=set_cmd, get_parser=get_parser)
+        setattr(self, name, param)
 
     def query(self, cmd):
         return self.visa_handle.query(cmd)
