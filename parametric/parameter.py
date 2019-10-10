@@ -18,10 +18,11 @@
 import numpy as np
 
 class Parameter:
-    def __init__(self, name, value=None, get_cmd=None, set_cmd=None, bounds=(-np.inf, np.inf)):
+    def __init__(self, name, value=None, get_cmd=None, set_cmd=None, bounds=(-np.inf, np.inf), get_parser=None):
         self.name = name
         self.get_cmd = get_cmd
         self.set_cmd = set_cmd
+        self.get_parser = get_parser
         self.bounds = bounds
 
         self(value)
@@ -34,6 +35,8 @@ class Parameter:
             self.value = self.get_cmd()
         if self.value is None:
             raise ValueError(f'Value of parameter {self.name} not yet set.')
+        if self.get_parser is not None:
+            self.value = self.get_parser(self.value)
         return self.value
 
     def set(self, value):
