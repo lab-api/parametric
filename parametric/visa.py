@@ -44,6 +44,7 @@ class VisaInstrument(Instrument):
     def add_parameter(self, name, get_cmd=None, set_cmd=None, get_parser=None):
         param = VisaParameter(name, self, get_cmd=get_cmd, set_cmd=set_cmd, get_parser=get_parser)
         setattr(self, name, param)
+        self.parameters[name] = param
 
     def query(self, cmd):
         return self.visa_handle.query(cmd)
