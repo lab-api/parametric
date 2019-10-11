@@ -3,10 +3,13 @@
     called SharedInstrument. Computer A connects to this instrument as usual, then
     starts a Local link:
         inst = SharedInstrument.connect(addr)
-        Local(inst)
+        Local(inst, local_addr)
 
     Computer B starts a remote link to access the instrument:
-        remote = Remote(SharedInstrument)
+        remote = Remote(SharedInstrument, local_addr)
+
+    In both calls, local_addr is the address:port string of Computer A, for
+    example '127.0.0.1:1105'.
 
     The Remote class mimics local control of the instrument, so Computer B can
     access getter and setter methods of its parameters in the usual way:
@@ -23,14 +26,13 @@ class Remote(Instrument):
     def __init__(self, instrument, address='127.0.0.1:1105'):
         super().__init__()
         self.socket = zmq.Context().socket(zmq.PAIR)
-
-        self.socket.bind(f"tcp://{address}")
+        self.socket.connect(f"tcp://{address}")
 
         self.instrument = instrument()
         for parameter in self.instrument.parameters.values():
-            get_cmd = partial(self.get_cmd, parameter.name)
-            set_cmd = partial(self.set_cmd, parameter.name)
-            self.add_parameter(parameter.name, set_cmd=set_cmd)
+            self.add_parameter(parameter.name, 
+                               get_cmd=partial(self.get_cmd, parameter.name),
+                               set_cmd=partial(self.set_cmd, parameter.name))
 
     def get_cmd(self, name):
         self.socket.send_string(f'GET {name}')
@@ -44,7 +46,8 @@ class Local:
     def __init__(self, instrument, address='127.0.0.1:1105'):
         self.instrument = instrument
         self.socket = zmq.Context().socket(zmq.PAIR)
-        self.socket.connect(f"tcp://{address}")
+        self.socket.bind(f"tcp://{address}")
+
         Thread(target=self.receive).start()
 
     def receive(self):
