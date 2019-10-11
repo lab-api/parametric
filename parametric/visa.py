@@ -33,18 +33,30 @@ class VisaParameter:
 
 class VisaInstrument(Instrument):
     base_parameter = VisaParameter
-    def __init__(self, address, visa_handle=None, read_termination=None, write_termination = None):
+    write_termination = '\r\n'
+    read_termination = '\r\n'
+    
+    def __init__(self):
         super().__init__()
-        if visa_handle is None:
-            visa_handle = visa.ResourceManager().open_resource(address)
-        self.visa_handle = visa_handle
-        self.visa_handle.write_termination = write_termination
-        self.visa_handle.read_termination = read_termination
 
     def add_parameter(self, name, get_cmd=None, set_cmd=None, get_parser=None):
         param = VisaParameter(name, self, get_cmd=get_cmd, set_cmd=set_cmd, get_parser=get_parser)
         setattr(self, name, param)
         self.parameters[name] = param
+
+    def connect(self, address, visa_handle=None, read_termination=None, write_termination = None):
+        visa_handle = visa.ResourceManager().open_resource(address)
+        self.visa_handle = visa_handle
+        self.visa_handle.write_termination = self.write_termination
+        self.visa_handle.read_termination = self.read_termination
+        self._connect()
+
+        return self
+
+    def _connect(self):
+        ''' Override this function to run a custom sequence after opening the device
+            connection, like reading headers. '''
+        pass
 
     def query(self, cmd):
         return self.visa_handle.query(cmd)
