@@ -30,7 +30,7 @@ class Remote(Instrument):
 
         self.instrument = instrument()
         for parameter in self.instrument.parameters.values():
-            self.add_parameter(parameter.name, 
+            self.add_parameter(parameter.name,
                                get_cmd=partial(self.get_cmd, parameter.name),
                                set_cmd=partial(self.set_cmd, parameter.name))
 
@@ -60,10 +60,9 @@ class Local:
             msg = self.socket.recv_string()
             command = msg.split(' ')[0]
             parameter = getattr(self.instrument, msg.split(' ')[1])
-
             if command == 'SET':
                 value = msg.split(' ')[2]
-                parameter(value)
+                parameter(float(value))
 
             elif command == 'GET':
                 self.socket.send_string(str(parameter()))
