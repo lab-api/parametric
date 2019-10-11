@@ -1,4 +1,10 @@
 from .parameter import Parameter, parametrize
 from .instrument import Instrument
-from .visa import VisaInstrument, VisaParameter, VisaInstrumentChannel
-from .zmq import Local, Remote
+try:
+    from .visa import VisaInstrument, VisaParameter, VisaInstrumentChannel
+except ImportError:
+    pass
+try:
+    from .zmq import Local, Remote
+except ImportError:
+    pass
