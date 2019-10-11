@@ -15,6 +15,14 @@
     access getter and setter methods of its parameters in the usual way:
         remote.parameterA(5)     # sets parameterA to 5
         remote.parameterA()      # returns 5
+
+    Remote procedure calls are also possible through the Remote.call() method,
+    which accepts arbitrary arguments and/or keyword arguments. For example,
+        remote.call('foo', 'bar', keyword='baz')
+    is equivalent to calling Instrument.foo('bar', keyword='baz') locally.
+    Arguments and keyword arguments should be JSON-compatible, and their types
+    passed into Remote.call() will be preserved on the local end. The return value
+    of the Instrument method will be returned by Remote.call().
 '''
 
 import zmq
@@ -35,11 +43,15 @@ class Remote(Instrument):
                                set_cmd=partial(self.set_cmd, parameter.name))
 
     def get_cmd(self, name):
-        self.socket.send_string('GET {}'.format(name))
-        return float(self.socket.recv_string())
+        self.socket.send_json({'op': 'get', 'parameter': name})
+        return self.socket.recv_json()['response']
 
     def set_cmd(self, name, val):
-        self.socket.send_string('SET {} {}'.format(name, val))
+        self.socket.send_json({'op': 'set', 'parameter': name, 'value': val})
+
+    def call(self, func_name, *args, **kwargs):
+        self.socket.send_json({'op': 'call', 'function': func_name, 'args': args, 'kwargs': kwargs})
+        return self.socket.recv_json()['response']
 
 class Local:
     ''' Subscribe to a zmq feed and update the attached Parameter when commands are received'''
@@ -51,18 +63,32 @@ class Local:
         Thread(target=self.receive).start()
 
     def receive(self):
-        ''' Receives a message consisting of a command ('SET' or 'GET'), a parameter name, and
-            a value in the case of a set command and handles accordingly.
+        ''' Receives a JSON-formatted message containing an 'op' field
+            ('get', 'set', or 'call') and other fields corresponding to the passed op.
 
-            Example formats: "GET x", "SET x 5"
+            Examples of valid messages:
+                {'op': 'get', 'parameter': 'x'}
+                {'op': 'set', 'parameter': 'y', 'value': 3}
+                {'op': 'call', 'function': 'foo', 'args': ['bar']}
         '''
         while True:
-            msg = self.socket.recv_string()
-            command = msg.split(' ')[0]
-            parameter = getattr(self.instrument, msg.split(' ')[1])
-            if command == 'SET':
-                value = msg.split(' ')[2]
-                parameter(float(value))
+            msg = self.socket.recv_json()
+            op = msg['op']
 
-            elif command == 'GET':
-                self.socket.send_string(str(parameter()))
+            ## setting Parameters
+            if op == 'set':
+                parameter = getattr(self.instrument, msg['parameter'])
+                parameter(msg['value'])
+
+            ## getting Parameter values
+            elif op == 'get':
+                parameter = getattr(self.instrument, msg['parameter'])
+                self.socket.send_json({'response': parameter()})
+
+            ## remote procedure calls
+            elif op == 'call':
+                func = getattr(self.instrument, msg['function'])
+                args = msg['args']
+                kwargs = msg['kwargs']
+                response = func(*args, **kwargs)
+                self.socket.send_json({'response': response})
