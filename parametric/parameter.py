@@ -28,13 +28,13 @@ class Parameter:
         self(value)
 
     def __repr__(self):
-        return f"Parameter('{self.name}', {self()})"
+        return "Parameter('{}', {})".format(self.name, self())
 
     def get(self):
         if self.get_cmd is not None:
             self.value = self.get_cmd()
         if self.value is None:
-            raise ValueError(f'Value of parameter {self.name} not yet set.')
+            raise ValueError('Value of parameter {} not yet set.'.format(self.name))
         if self.get_parser is not None:
             self.value = self.get_parser(self.value)
         return self.value

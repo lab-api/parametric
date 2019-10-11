@@ -26,7 +26,7 @@ class Remote(Instrument):
     def __init__(self, instrument, address='127.0.0.1:1105'):
         super().__init__()
         self.socket = zmq.Context().socket(zmq.PAIR)
-        self.socket.connect(f"tcp://{address}")
+        self.socket.connect("tcp://{}".format(address))
 
         self.instrument = instrument()
         for parameter in self.instrument.parameters.values():
@@ -35,18 +35,18 @@ class Remote(Instrument):
                                set_cmd=partial(self.set_cmd, parameter.name))
 
     def get_cmd(self, name):
-        self.socket.send_string(f'GET {name}')
+        self.socket.send_string('GET {}'.format(name))
         return float(self.socket.recv_string())
 
     def set_cmd(self, name, val):
-        self.socket.send_string(f'SET {name} {val}')
+        self.socket.send_string('SET {} {}'.format(name, val))
 
 class Local:
     ''' Subscribe to a zmq feed and update the attached Parameter when commands are received'''
     def __init__(self, instrument, address='127.0.0.1:1105'):
         self.instrument = instrument
         self.socket = zmq.Context().socket(zmq.PAIR)
-        self.socket.bind(f"tcp://{address}")
+        self.socket.bind("tcp://{}".format(address))
 
         Thread(target=self.receive).start()
 
