@@ -42,6 +42,10 @@ class Remote(Instrument):
                                get_cmd=partial(self.get_cmd, parameter.name),
                                set_cmd=partial(self.set_cmd, parameter.name))
 
+        for parameter in self.instrument.objectives.values():
+            self.add_parameter(parameter.name,
+                               get_cmd=partial(self.get_cmd, parameter.name))
+
     def get_cmd(self, name):
         self.socket.send_json({'op': 'get', 'parameter': name})
         return self.socket.recv_json()['response']

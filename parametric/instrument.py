@@ -4,15 +4,21 @@ class Instrument:
     base_parameter = Parameter
     def __init__(self):
         self.parameters = {}
+        self.objectives = {}
 
     def add_parameter(self, name, value=None, get_cmd=None, set_cmd=None, get_parser=None):
         param = self.base_parameter(name, value=value, get_cmd=get_cmd, set_cmd=set_cmd, get_parser=get_parser)
         setattr(self, name, param)
         self.parameters[name] = param
 
+    def add_objective(self, name, get_cmd):
+        param = self.base_parameter(name, get_cmd=get_cmd)
+        setattr(self, name, param)
+        self.objectives[name] = param
+
     def connect(self, address):
         pass
-        
+
     @classmethod
     def remote(cls, address):
         ''' Open and return a mimicked Instrument on a remote PC. '''

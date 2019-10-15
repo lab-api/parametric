@@ -62,6 +62,10 @@ class Parameter:
             if args[0] is not None:
                 self.set(args[0])
 
+    @property
+    def __name__(self):
+        return self.name
+
     def __neg__(self):
         return -self()
 
