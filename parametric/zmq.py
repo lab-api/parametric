@@ -26,6 +26,7 @@
 '''
 
 import zmq
+import inspect
 from functools import partial
 from threading import Thread
 from parametric import Instrument
@@ -57,6 +58,19 @@ class Remote(Instrument):
         self.socket.send_json({'op': 'call', 'function': func_name, 'args': args, 'kwargs': kwargs})
         return self.socket.recv_json()['response']
 
+    def exec(self, func, target='local'):
+        ''' If target == 'local', send the passed function to the Local target to
+            run there. If target == 'remote', run the function on the Remote with
+            actuation over ZMQ. Running remotely will generally be used only for
+            benchmarking purposes, since local cost functions can't be accessed
+            remotely - UNLESS they're defined as Parameters.
+        '''
+        if target == 'local':
+            self.socket.send_json({'op': 'exec', 'function': inspect.getsource(func), 'name': func.__name__})
+            return self.socket.recv_json()['response']
+        elif target == 'remote':
+            return func(self.instrument)
+
 class Local:
     ''' Subscribe to a zmq feed and update the attached Parameter when commands are received'''
     def __init__(self, instrument, address='127.0.0.1:1105'):
@@ -74,6 +88,7 @@ class Local:
                 {'op': 'get', 'parameter': 'x'}
                 {'op': 'set', 'parameter': 'y', 'value': 3}
                 {'op': 'call', 'function': 'foo', 'args': ['bar']}
+                {'op': 'exec', 'function': foo}
         '''
         while True:
             msg = self.socket.recv_json()
@@ -95,4 +110,11 @@ class Local:
                 args = msg['args']
                 kwargs = msg['kwargs']
                 response = func(*args, **kwargs)
+                self.socket.send_json({'response': response})
+
+            ## locally define and run a function sent as a string
+            elif op == 'exec':
+                exec(msg['function'])
+                func = eval(msg['name'])
+                response = func(self.instrument)
                 self.socket.send_json({'response': response})
