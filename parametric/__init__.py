@@ -1,4 +1,5 @@
-from .parameter import Parameter, parametrize
+from .parameter import Parameter
+from .attribute import Attribute, parametrize
 from .instrument import Instrument
 try:
     from .visa import VisaInstrument, VisaParameter, VisaInstrumentChannel

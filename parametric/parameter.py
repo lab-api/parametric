@@ -18,11 +18,12 @@
 import numpy as np
 
 class Parameter:
-    def __init__(self, name, value=None, get_cmd=None, set_cmd=None, bounds=(-np.inf, np.inf), get_parser=None):
+    def __init__(self, name, value=None, get_cmd=None, set_cmd=None, bounds=(-np.inf, np.inf), get_parser=None, set_parser=None):
         self.name = name
         self.get_cmd = get_cmd
         self.set_cmd = set_cmd
         self.get_parser = get_parser
+        self.set_parser = set_parser
         self.bounds = bounds
 
         self(value)
@@ -42,6 +43,8 @@ class Parameter:
     def set(self, value):
         if not self.bounds[0] <= value <= self.bounds[1]:
             raise ValueError('Setpoint outside of defined bounds')
+        if self.set_parser is not None:
+            value = self.set_parser(value)
         self.value = value
         if self.set_cmd is not None:
             self.set_cmd(value)
@@ -127,11 +130,3 @@ class Parameter:
     def __idiv__(self, a):
         self(self.value/a)
         return self
-
-def parametrize(self, **kwargs):
-    ''' Converts passed keyword arguments into Parameters. For example,
-        calling parametrize(self, a=1) in a class constructor will attach
-        a Parameter attribute called a with value 1 to the class.
-    '''
-    for name, value in kwargs.items():
-        setattr(self, name, Parameter(name, value))
