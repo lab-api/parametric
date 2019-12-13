@@ -25,22 +25,15 @@ By default, the state is represented only internally. You can pass functions to 
 y = Parameter('y', get_cmd=measure_voltage, set_cmd=set_voltage)
 ```
 
-The Parameter class supports mathematical operations, which will return new parameters. For example, 
+The Parameter class supports mathematical operations transparently:
 
 ```python
-voltage = Parameter('voltage')
+voltage = Parameter('voltage', 1)
 resistance = 50
-power = voltage**2/50
-
-voltage(1)  # set to 1 V
-power()
+power = voltage**2/resistance
+print(power)
 
 >> 0.02
 ```
 
-The new parameter's set method is automatically updated, so you can also set the power directly:
-```python
-power(.08)  # set to 80 mW
-voltage()
->> 2
-```
+Parametric can also be used in conjunction with the Optimistic library to effortlessly optimize multiparameter experiments or simulations.
