@@ -2,7 +2,8 @@ from parametric import Parameter
 
 class Instrument:
     base_parameter = Parameter
-    def __init__(self):
+    def __init__(self, name=''):
+        self.name = name
         self.parameters = {}
         self.objectives = {}
 

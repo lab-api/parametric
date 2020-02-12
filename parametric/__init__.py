@@ -1,5 +1,6 @@
 from .parameter import Parameter
-from .attribute import Attribute, parametrize
+from .switch import Switch
+from .attribute import Attribute, parametrize, Toggle
 from .instrument import Instrument
 try:
     from .visa import VisaInstrument, VisaParameter, VisaInstrumentChannel
