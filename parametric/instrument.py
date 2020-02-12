@@ -4,18 +4,6 @@ class Instrument:
     base_parameter = Parameter
     def __init__(self, name=''):
         self.name = name
-        self.parameters = {}
-        self.objectives = {}
-
-    def add_parameter(self, name, value=None, get_cmd=None, set_cmd=None, get_parser=None):
-        param = self.base_parameter(name, value=value, get_cmd=get_cmd, set_cmd=set_cmd, get_parser=get_parser)
-        setattr(self, name, param)
-        self.parameters[name] = param
-
-    def add_objective(self, name, get_cmd):
-        param = self.base_parameter(name, get_cmd=get_cmd)
-        setattr(self, name, param)
-        self.objectives[name] = param
 
     def connect(self, address):
         pass
@@ -30,3 +18,22 @@ class Instrument:
         ''' Make the device accessible over ZMQ on the specified address. '''
         from parametric import Local
         self.local = Local(self, address)
+
+    def children(self, kind=None, return_values=False):
+        ''' Returns all instances of a passed type in the dictionary. '''
+        instances = {}
+        namespace = self.__dict__
+        for x in namespace.keys():
+            if isinstance(namespace[x], Parameter):
+                if kind is not None and namespace[x].kind != kind:
+                    continue
+                parameter = namespace[x]
+                if return_values:
+                    instances[parameter.name] = parameter.get()
+                else:
+                    instances[parameter.name] = parameter
+
+            elif isinstance(namespace[x], Instrument):
+                instances[namespace[x].name] = namespace[x].children()
+
+        return instances
