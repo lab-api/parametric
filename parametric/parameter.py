@@ -18,15 +18,17 @@
 import numpy as np
 
 class Parameter:
-    def __init__(self, name, value=None, get_cmd=None, set_cmd=None, bounds=(-np.inf, np.inf), get_parser=None, set_parser=None):
+    def __init__(self, name, value=None, get_cmd=None, set_cmd=None, bounds=(-np.inf, np.inf), get_parser=None, set_parser=None, kind=None):
         self.name = name
         self.get_cmd = get_cmd
         self.set_cmd = set_cmd
         self.get_parser = get_parser
         self.set_parser = set_parser
         self.bounds = bounds
+        self.kind = kind
 
-        self(value)
+        if value is not None:
+            self.set(value)
 
     def __repr__(self):
         return "Parameter('{}', {})".format(self.name, self())
