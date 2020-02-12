@@ -26,6 +26,7 @@ class Parameter:
         self.set_parser = set_parser
         self.bounds = bounds
         self.kind = kind
+        self.callbacks = {}
 
         if value is not None:
             self.set(value)
@@ -50,6 +51,8 @@ class Parameter:
         self.value = value
         if self.set_cmd is not None:
             self.set_cmd(value)
+        for callback in self.callbacks.values():
+            callback(value)
 
     def __call__(self, *args):
         ''' If called with no arguments, calls and returns the getter function.
