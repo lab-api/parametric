@@ -1,6 +1,7 @@
-from parametric import Attribute, parametrize
+from parametric import Attribute
+import attr
 
-@parametrize
+@attr.s
 class MyExperiment:
     x = Attribute('x', 0, converter=int)
 
@@ -11,11 +12,6 @@ def test_attribute_creation():
 def test_conversion():
     exp = MyExperiment(x=1.1)
     assert exp.x == 1 and isinstance(exp.x(), int)
-
-
-def test_parameter_dict():
-    exp = MyExperiment(x=0)
-    assert exp.__parameters__['x'] == exp.x
 
 def test_instance_isolation():
     exp1 = MyExperiment()
