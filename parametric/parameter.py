@@ -24,7 +24,7 @@ class Parameter:
         self.set_cmd = set_cmd
         self.get_parser = get_parser
         self.set_parser = set_parser
-        self.bounds = bounds
+        self.bounds = list(bounds)
         self.callbacks = {}
         self.enable_callbacks = True
 
