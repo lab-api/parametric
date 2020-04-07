@@ -1,1 +1,4 @@
+numpy
 visa
+zmq
+attr
