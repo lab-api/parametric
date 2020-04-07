@@ -1,6 +1,7 @@
 from .parameter import Parameter
 from .attribute import Attribute
 from .instrument import Instrument
+from .parametrize import parametrize
 try:
     from .visa import VisaInstrument, VisaParameter, VisaInstrumentChannel
 except ImportError:
